@@ -17,4 +17,6 @@ public final class Constants {
     public static final int kLeftFollowFalconID = 2;
     public static final int kRightMainFalconID = 3;
     public static final int kRightFollowFalconID = 4;
+	public static final double leftStickInputScale = 0.5;
+	public static final double rightStickInputScale = 0.5;
 }

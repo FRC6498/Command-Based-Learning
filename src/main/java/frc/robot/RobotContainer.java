@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,7 +21,7 @@ import frc.robot.subsystems.Drive;
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   private final Drive m_drive = new Drive();
-  private final DriveOpenLoop m_autoCommand = new DriveOpenLoop(m_drive);
+  private DoubleSupplier leftStick, rightStick;
 
   // Controllers
   XboxController mDriver, mOperator;
@@ -30,6 +32,14 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the button bindings
     configureButtonBindings();
+
+    m_drive.setDefaultCommand(
+      new DriveOpenLoop(
+        m_drive, 
+        () -> mDriver.getY(GenericHID.Hand.kLeft),
+        () -> mDriver.getY(GenericHID.Hand.kRight))
+    );
+
   }
 
   /**

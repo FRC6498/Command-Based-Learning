@@ -38,8 +38,11 @@ public class Drive extends SubsystemBase {
     rightMain.set(ControlMode.PercentOutput, speed);
   }
 
-
-
+  public void stopDrive()
+  {
+    leftMain.set(ControlMode.PercentOutput, 0);
+    rightMain.set(ControlMode.PercentOutput, 0);
+  }
 
   @Override
   public void periodic() {
