@@ -4,11 +4,9 @@
 
 package frc.robot;
 
-import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.commands.DriveOpenLoop;
 import frc.robot.subsystems.Drive;
 
@@ -21,7 +19,6 @@ import frc.robot.subsystems.Drive;
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   private final Drive m_drive = new Drive();
-  private DoubleSupplier leftStick, rightStick;
 
   // Controllers
   XboxController mDriver, mOperator;
@@ -67,8 +64,8 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
-  public Command getAutonomousCommand() {
+  //public Command getAutonomousCommand() {
     // An ExampleCommand will run in autonomous
-    return m_autoCommand;
-  }
+    //return m_autoCommand;
+  //}
 }
