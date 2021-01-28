@@ -4,9 +4,23 @@
 
 package frc.robot;
 
+import java.io.IOException;
+import java.nio.file.Path;
 
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.Sendable;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.wpilibj.controller.RamseteController;
+import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryUtil;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import frc.robot.commands.DriveOpenLoop;
 import frc.robot.subsystems.Drive;
 
@@ -19,6 +33,10 @@ import frc.robot.subsystems.Drive;
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   private final Drive m_drive = new Drive();
+  String pathJSON = "";
+  private Trajectory trajectory;
+  private SendableChooser<String> autoChooser;
+
 
   // Controllers
   XboxController mDriver, mOperator;
@@ -29,7 +47,13 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the button bindings
     configureButtonBindings();
+    trajectory = new Trajectory();
 
+    autoChooser = new SendableChooser<>();
+    autoChooser.setDefaultOption("Trajectory Test", "DriveTest");
+    autoChooser.addOption("Slalom", null);
+    autoChooser.addOption("Barrels", null);
+    SmartDashboard.putData(autoChooser);
     m_drive.setDefaultCommand(
       new DriveOpenLoop(
         m_drive, 
@@ -50,22 +74,46 @@ public class RobotContainer {
     mOperator = new XboxController(1);
   }
 
-  /**
-   * 
-   * @param axis The axis to return the value of; To get the X-value (left-right) pass in 0, to get the Y-value (up-down) pass in 1
-   * @return The raw value of the specififed axis
-   */
-  public double getDriverRawAxis(int axis) {
-    return mDriver.getRawAxis(axis);
+ private void GetTrajectory(String pathname)
+ {
+   pathJSON = String.format("paths/%s.json", pathname);
+  try {
+    Path trajectoryPath = Filesystem.getDeployDirectory().toPath().resolve(pathJSON);
+    trajectory = TrajectoryUtil.fromPathweaverJson(trajectoryPath);
+  } catch (IOException e) {
+    DriverStation.reportError("Unable to open Trajectory: " + pathJSON, e.getStackTrace());
   }
+ }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
    */
-  //public Command getAutonomousCommand() {
-    // An ExampleCommand will run in autonomous
-    //return m_autoCommand;
-  //}
+  public Command getAutonomousCommand() {
+    GetTrajectory(autoChooser.getSelected());
+
+      RamseteCommand ramseteCommand = new RamseteCommand(
+        trajectory, 
+        m_drive::getCurrentPose, 
+        new RamseteController(
+          Constants.kRamseteB, 
+          Constants.kRamseteZeta
+        ), 
+        new SimpleMotorFeedforward(
+          Constants.ksVolts, 
+          Constants.kvVoltSecondsPerMeter,
+          Constants.kaVoltSecondsSquaredPerMeter
+        ),
+        Constants.kDriveKinematics, 
+        m_drive::getWheelSpeeds, 
+        new PIDController(Constants.driveVelocitykP, 0, 0), 
+        new PIDController(Constants.driveVelocitykP, 0, 0), 
+        m_drive::tankDriveVolts,
+        m_drive
+      );
+
+      m_drive.resetOdometry(trajectory.getInitialPose());
+      return ramseteCommand.andThen(() -> m_drive.tankDriveVolts(0,0));
+  }
 }

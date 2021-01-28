@@ -32,7 +32,7 @@ public final class Constants {
     /**
      * Trajectory Constants
     */ 
-
+    // TODO: TUNE TRAJECTORY PID
     // Feedforward/Feedback Gains
 
     public static final double ksVolts = 0;
@@ -56,4 +56,5 @@ public final class Constants {
     // Input Scaling
 	public static final double leftStickInputScale = 0.5;
 	public static final double rightStickInputScale = 0.5;
+	public static double driveVelocitykP = 0;
 }
