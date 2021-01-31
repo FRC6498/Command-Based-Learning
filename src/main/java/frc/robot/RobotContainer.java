@@ -76,7 +76,7 @@ public class RobotContainer {
 
  private void GetTrajectory(String pathname)
  {
-   pathJSON = String.format("paths/%s.json", pathname);
+   pathJSON = String.format("paths/%s.wpilib.json", pathname);
   try {
     Path trajectoryPath = Filesystem.getDeployDirectory().toPath().resolve(pathJSON);
     trajectory = TrajectoryUtil.fromPathweaverJson(trajectoryPath);
@@ -91,7 +91,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    GetTrajectory(autoChooser.getSelected());
+    GetTrajectory("DriveTest");
 
       RamseteCommand ramseteCommand = new RamseteCommand(
         trajectory, 

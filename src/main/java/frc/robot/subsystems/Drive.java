@@ -53,6 +53,8 @@ public class Drive extends SubsystemBase {
 
     leftMotors.setInverted(true);
 
+    diffdrive.setSafetyEnabled(false);
+
     //leftFollow.follow(leftMain, FollowerType.PercentOutput);
     //rightFollow.follow(rightMain, FollowerType.PercentOutput);
     //leftMain.setInverted(true);
@@ -156,6 +158,11 @@ public class Drive extends SubsystemBase {
     rightMotors.set(speed);
   }
 
+
+  // TODO: PATHWEAVER PARAMS
+  // max vel = 1.0m/s
+  // max vel = 1.0 m/s^2
+  // wheel base = 0.572m
   /**
    * Stops all drive motors immediately
    */
