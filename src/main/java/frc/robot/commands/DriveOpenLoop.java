@@ -8,18 +8,20 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants;
+import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import frc.robot.subsystems.Drive;
 
 public class DriveOpenLoop extends CommandBase {
 
-  private final Drive m_Drive;
+  private final Drive drive;
   private final DoubleSupplier left, right;
   /** Creates a new TankDrive. */
   public DriveOpenLoop(Drive subsystem, DoubleSupplier leftSupplier, DoubleSupplier rightSupplier) {
     left = leftSupplier;
     right = rightSupplier;
-    m_Drive = subsystem;
-    addRequirements(m_Drive);
+    drive = subsystem;
+    addRequirements(drive);
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
@@ -32,16 +34,13 @@ public class DriveOpenLoop extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double leftStickY = left.getAsDouble();
-    double rightStickY = right.getAsDouble();
-    m_Drive.setLeftMotors(leftStickY*Constants.leftStickInputScale);
-    m_Drive.setRightMotors(rightStickY*Constants.rightStickInputScale);
+    drive.setOpenLoop(Robot.m_robotContainer.getDriveSignal());
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    m_Drive.stopDrive();
+    //m_Drive.stopDrive();
   }
 
   // Returns true when the command should end.

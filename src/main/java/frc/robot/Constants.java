@@ -35,26 +35,14 @@ public final class Constants {
     // TODO: TUNE TRAJECTORY PID
     // Feedforward/Feedback Gains
 
-    public static final double ksVolts = 0;
-    public static final double kvVoltSecondsPerMeter = 0;
-    public static final double kaVoltSecondsSquaredPerMeter = 0;
-    public static final double kPDriveVel = 1.0;
-
     // Max Velocity/Acceleration
     public static final double kMaxSpeedMetersPerSecond = 3;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3;
 
-    // RAMSETE parameters
-    public static final double kRamseteB = 2;
-    public static final double kRamseteZeta = 0.7;
-
-    // DifferentialDriveKinematics
-    public static final double kTrackWidthMeters = 0.54;
-    public static final DifferentialDriveKinematics kDriveKinematics =
-    new DifferentialDriveKinematics(kTrackWidthMeters);
-
     // Input Scaling
 	public static final double leftStickInputScale = 0.5;
 	public static final double rightStickInputScale = 0.5;
-	public static double driveVelocitykP = 0;
+	public static double kDriveTicksPerInch = 0;
+	public static double regularTurnReduction = 0;
+	public static double kDriveSwivelReduction = 0;
 }

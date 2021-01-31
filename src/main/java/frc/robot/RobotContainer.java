@@ -21,8 +21,10 @@ import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
+import frc.lib.util.DriveSignal;
 import frc.robot.commands.DriveOpenLoop;
 import frc.robot.subsystems.Drive;
+import frc.lib.util.Util;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -36,10 +38,13 @@ public class RobotContainer {
   String pathJSON = "";
   private Trajectory trajectory;
   private SendableChooser<String> autoChooser;
-
+  double throttle=0;
+  double turn=0;
+  boolean driveInverted;
 
   // Controllers
   XboxController mDriver, mOperator;
+  
 
   // Buttons
 
@@ -74,16 +79,113 @@ public class RobotContainer {
     mOperator = new XboxController(1);
   }
 
- private void GetTrajectory(String pathname)
- {
-   pathJSON = String.format("paths/%s.wpilib.json", pathname);
-  try {
-    Path trajectoryPath = Filesystem.getDeployDirectory().toPath().resolve(pathJSON);
-    trajectory = TrajectoryUtil.fromPathweaverJson(trajectoryPath);
-  } catch (IOException e) {
-    DriverStation.reportError("Unable to open Trajectory: " + pathJSON, e.getStackTrace());
+  public void driverArcadeDrive() {
+    throttle=0;
+    turn=mDriver.getX(GenericHID.Hand.kLeft)*Constants.regularTurnReduction;
+    if(mDriver.getTriggerAxis(GenericHID.Hand.kRight)>.05) {
+        throttle=mDriver.getTriggerAxis(GenericHID.Hand.kRight);			
+    }else if(mDriver.getTriggerAxis(GenericHID.Hand.kLeft)>.05) {
+        throttle=-mDriver.getTriggerAxis(GenericHID.Hand.kLeft);
+        turn=-turn;
+    }else {
+        throttle=0;
+        turn=turn*Constants.kDriveSwivelReduction;
+    }
+    if(getDriveInverted()&&throttle!=0){
+        //turn=turn;
+        throttle=-throttle;
+    }
   }
- }
+
+  public boolean getDriveInverted() {
+    if(mDriver.getStickButtonReleased(GenericHID.Hand.kLeft)){
+        driveInverted=!driveInverted;
+        //if(driveInverted)CameraVision.setStreamMode(StreamMode.LimeMain);
+        //else CameraVision.setStreamMode(StreamMode.USBMain);
+    }
+  
+    return driveInverted;
+    //System.out.println("turn: "+turn+" throttle: "+throttle);
+  }
+
+  public double getThrottle() {
+      driverArcadeDrive();
+      return throttle;
+  }
+
+  public double getTurn() {
+      driverArcadeDrive();
+      return turn;
+  }
+
+
+  public DriveSignal getDriveSignal() {
+    boolean squareInputs=true;
+    double xSpeed;
+    double zRotation;
+    
+    driverArcadeDrive();
+    
+
+    xSpeed=throttle;
+
+    zRotation = turn;
+    
+
+    // Square the inputs (while preserving the sign) to increase fine control
+    // while permitting full power.
+    if (squareInputs) {
+        xSpeed = Math.copySign(xSpeed * xSpeed, xSpeed);
+        zRotation = Math.copySign(zRotation * zRotation, zRotation);
+    }
+    
+    
+
+    double leftMotorOutput;
+    double rightMotorOutput;
+
+    double maxInput = Math.copySign(Math.max(Math.abs(xSpeed), Math.abs(zRotation)), xSpeed);
+
+    if (xSpeed >= 0.0) {
+        // First quadrant, else second quadrant
+        if (zRotation >= 0.0) {
+        leftMotorOutput = maxInput;
+        rightMotorOutput = xSpeed - zRotation;
+        } else {
+        leftMotorOutput = xSpeed + zRotation;
+        rightMotorOutput = maxInput;
+        }
+    } else {
+        // Third quadrant, else fourth quadrant
+        if (zRotation >= 0.0) {
+        leftMotorOutput = xSpeed + zRotation;
+        rightMotorOutput = maxInput;
+        } else {
+        leftMotorOutput = maxInput;
+        rightMotorOutput = xSpeed - zRotation;
+        }
+    }
+    double m_rightSideInvertMultiplier = -1.0;
+
+    leftMotorOutput=leftMotorOutput*1;
+    rightMotorOutput=rightMotorOutput*m_rightSideInvertMultiplier;
+
+    
+// System.out.println("Rot:"+turn+" xSpeed: "+xSpeed+" Left: "+leftMotorOutput+ " right: "+rightMotorOutput);
+    return new DriveSignal(leftMotorOutput,rightMotorOutput,false);
+    
+}
+
+  private void GetTrajectory(String pathname)
+  {
+    pathJSON = String.format("paths/%s.wpilib.json", pathname);
+    try {
+      Path trajectoryPath = Filesystem.getDeployDirectory().toPath().resolve(pathJSON);
+      trajectory = TrajectoryUtil.fromPathweaverJson(trajectoryPath);
+    } catch (IOException e) {
+      DriverStation.reportError("Unable to open Trajectory: " + pathJSON, e.getStackTrace());
+    }
+  }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -92,28 +194,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     GetTrajectory("DriveTest");
-
-      RamseteCommand ramseteCommand = new RamseteCommand(
-        trajectory, 
-        m_drive::getCurrentPose, 
-        new RamseteController(
-          Constants.kRamseteB, 
-          Constants.kRamseteZeta
-        ), 
-        new SimpleMotorFeedforward(
-          Constants.ksVolts, 
-          Constants.kvVoltSecondsPerMeter,
-          Constants.kaVoltSecondsSquaredPerMeter
-        ),
-        Constants.kDriveKinematics, 
-        m_drive::getWheelSpeeds, 
-        new PIDController(Constants.driveVelocitykP, 0, 0), 
-        new PIDController(Constants.driveVelocitykP, 0, 0), 
-        m_drive::tankDriveVolts,
-        m_drive
-      );
-
-      m_drive.resetOdometry(trajectory.getInitialPose());
-      return ramseteCommand.andThen(() -> m_drive.tankDriveVolts(0,0));
+    return null;
   }
 }

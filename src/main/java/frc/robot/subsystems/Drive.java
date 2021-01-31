@@ -7,169 +7,83 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.FollowerType;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+
 import com.kauailabs.navx.frc.AHRS;
 
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.geometry.Pose2d;
-import edu.wpi.first.wpilibj.interfaces.Gyro;
-import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
-import edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.util.CANFalconFactory;
+import frc.lib.util.DriveSignal;
+import frc.lib.util.motion_profiles.MotionProfileHelper;
 import frc.robot.Constants;
 
 public class Drive extends SubsystemBase {
-  private final WPI_TalonFX leftMain, leftFollow, rightMain, rightFollow;
-  private final SpeedControllerGroup leftMotors, rightMotors;
-  private final DifferentialDrive diffdrive;
-  private final AHRS gyro;
-  private final DifferentialDriveOdometry odometry;
-
+  // Subsystem Instance
+  private static Drive instance = new Drive();
+  // Hardware
+  private TalonFX leftMain, leftFollow, rightMain, rightFollow;
+  // Controllers
+  MotionProfileHelper leftProfileController, rightProfileController;
+  boolean profileEnabled = false;
+  /**
+   * true = BRAKE, false = COAST
+   */
+  boolean brakeMode = true;
   /** Creates a new Drive. */
   public Drive() {
-    leftMain = new WPI_TalonFX(Constants.kLeftMainFalconID);
-    leftMain.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
+    // falcons
+    leftMain = CANFalconFactory.createFalcon(Constants.kLeftMainFalconID,
+     true, NeutralMode.Brake, FeedbackDevice.IntegratedSensor, 0, false);
+    leftFollow = CANFalconFactory.createFalcon(Constants.kLeftFollowFalconID, 
+    true, NeutralMode.Brake, FeedbackDevice.IntegratedSensor, 0, false);
+    rightMain = CANFalconFactory.createFalcon(Constants.kRightMainFalconID, 
+    false, NeutralMode.Brake, FeedbackDevice.IntegratedSensor, 0, false);
+    rightFollow = CANFalconFactory.createFalcon(Constants.kRightFollowFalconID, 
+    false, NeutralMode.Brake, FeedbackDevice.IntegratedSensor, 0, false);
 
-    leftFollow = new WPI_TalonFX(Constants.kLeftFollowFalconID);
-    leftFollow.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
-    
-    rightMain = new WPI_TalonFX(Constants.kRightMainFalconID);
-    rightMain.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
-    
-    rightFollow = new WPI_TalonFX(Constants.kRightFollowFalconID);
-    rightFollow.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
-    
-    leftMotors = new SpeedControllerGroup(leftMain, leftFollow);
-    rightMotors = new SpeedControllerGroup(rightMain, rightFollow);
-    
-    diffdrive = new DifferentialDrive(leftMotors, rightMotors);
-    
-    gyro = new AHRS();
+    leftFollow.follow(leftMain);
+    rightFollow.follow(rightMain);
+  }
 
-    resetEncoders();
-
-    odometry = new DifferentialDriveOdometry(gyro.getRotation2d());
-
-    leftMotors.setInverted(true);
-
-    diffdrive.setSafetyEnabled(false);
-
-    //leftFollow.follow(leftMain, FollowerType.PercentOutput);
-    //rightFollow.follow(rightMain, FollowerType.PercentOutput);
-    //leftMain.setInverted(true);
+  public static Drive getInstance() {
+    return instance;
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    odometry.update(
-      gyro.getRotation2d(), 
-      (leftMain.getSelectedSensorPosition()+leftFollow.getSelectedSensorPosition())/2, 
-      (rightMain.getSelectedSensorPosition()+rightFollow.getSelectedSensorPosition())/2
-    );
+
   }
 
-  /**
-   * 
-   * @return The currently-estimated pose of the robot
-   */
-  public Pose2d getCurrentPose() {
-    return odometry.getPoseMeters();
-  }
-
-  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
-    return new DifferentialDriveWheelSpeeds(
-      leftMain.getSelectedSensorVelocity(), 
-      rightMain.getSelectedSensorVelocity()
-    );
-  }
-
-  public void resetOdometry(Pose2d pose) 
+  public void setOpenLoop(DriveSignal signal)
   {
-    resetEncoders();
-    odometry.resetPosition(pose, gyro.getRotation2d());
+    if (!profileEnabled) {
+      setBrakeMode(signal.getBrakeMode());
+      // left side is reversed, but reverseOutput doesnt invert percentvbus
+      leftMain.set(ControlMode.PercentOutput, signal.getLeft());
+      rightMain.set(ControlMode.PercentOutput, signal.getRight());
+    }
   }
 
-  public void arcadeDrive(double fwd, double rot) 
-  {
-    diffdrive.arcadeDrive(fwd, rot);
+  public void setBrakeMode(boolean brakeMode) {
+    if (brakeMode) {
+      leftMain.setNeutralMode(NeutralMode.Brake);
+      rightMain.setNeutralMode(NeutralMode.Brake);
+    }
+    else {
+      leftMain.setNeutralMode(NeutralMode.Coast);
+      rightMain.setNeutralMode(NeutralMode.Coast);
+    }
   }
 
-  public void tankDriveVolts(double leftVolts, double rightVolts)
-  {
-    leftMotors.setVoltage(leftVolts);
-    rightMotors.setVoltage(rightVolts);
-    diffdrive.feed();
+  private double inchesToTicks(double inches) {
+    return inches*Constants.kDriveTicksPerInch;
   }
-
-  public void resetEncoders()
-  {
-    leftMain.setSelectedSensorPosition(0);
-    leftFollow.setSelectedSensorPosition(0);
-    rightMain.setSelectedSensorPosition(0);
-    rightFollow.setSelectedSensorPosition(0);
-  }
-
-  public double getAverageEncoderDistance()
-  {
-    double leftavg = (leftMain.getSelectedSensorPosition() 
-      + leftFollow.getSelectedSensorPosition()) / 2.0;
-    double rightavg = (rightMain.getSelectedSensorPosition() 
-      + rightFollow.getSelectedSensorPosition()) / 2.0;
-    return (leftavg + rightavg)/2.0;
-  }
-
-  public void setMaxDriveOutput(double maxDrive)
-  {
-    diffdrive.setMaxOutput(maxDrive);
-  }
-
-  public void resetHeading()
-  {
-    gyro.reset();
-  }
-
-  public double getHeading()
-  {
-    return gyro.getRotation2d().getDegrees();
-  }
-
-  public double getTurnRate()
-  {
-    return -gyro.getRate();
-  }
-
-  /**
-   * Sets the output of the left side drive motors
-   * @param speed The percent output to set
-   */
-  public void setLeftMotors(double speed) {
-    //leftMain.set(ControlMode.PercentOutput, speed);
-    leftMotors.set(speed);
-  }
-
-  /**
-   * Sets the output of the right side drive motors
-   * @param speed The percent output to set
-   */
-  public void setRightMotors(double speed) {
-    //rightMain.set(ControlMode.PercentOutput, speed);
-    rightMotors.set(speed);
-  }
-
-
+ 
   // TODO: PATHWEAVER PARAMS
   // max vel = 1.0m/s
   // max vel = 1.0 m/s^2
   // wheel base = 0.572m
-  /**
-   * Stops all drive motors immediately
-   */
-  public void stopDrive() {
-    leftMotors.stopMotor();
-    rightMotors.stopMotor();
-    //leftMain.set(ControlMode.PercentOutput, 0);
-    //rightMain.set(ControlMode.PercentOutput, 0);
-  }
 }
