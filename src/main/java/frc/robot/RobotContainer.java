@@ -35,8 +35,6 @@ import frc.lib.util.Util;
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   private final Drive m_drive = new Drive();
-  String pathJSON = "";
-  private Trajectory trajectory;
   private SendableChooser<String> autoChooser;
   double throttle=0;
   double turn=0;
@@ -52,7 +50,6 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the button bindings
     configureButtonBindings();
-    trajectory = new Trajectory();
 
     autoChooser = new SendableChooser<>();
     autoChooser.setDefaultOption("Trajectory Test", "DriveTest");
@@ -115,6 +112,7 @@ public class RobotContainer {
       return turn;
   }
 
+  
 
   public DriveSignal getDriveSignal() {
     boolean squareInputs=true;
