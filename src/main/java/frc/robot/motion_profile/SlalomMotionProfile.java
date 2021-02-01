@@ -4,8 +4,10 @@
 
 package frc.robot.motion_profile;
 
-/** Profile used for drivebase consistency testing. */
-public class DriveTestProfile {
+import frc.lib.util.motion_profiles.MotionProfileBase;
+
+/** Motion Profile used for the Slalom Path*/
+public class SlalomMotionProfile extends MotionProfileBase {
     public int numPointsLeft = 0;
     public int numPointsRight;
 
