@@ -14,6 +14,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.util.CANFalconFactory;
 import frc.lib.util.DriveSignal;
@@ -29,6 +30,7 @@ public class Drive extends SubsystemBase {
   // Controllers
   MotionProfileHelper leftProfileController, rightProfileController;
   boolean profileEnabled = false;
+  MotionProfileBase selectedProfile;
   /**
    * true = BRAKE, false = COAST
    */
@@ -99,6 +101,28 @@ public class Drive extends SubsystemBase {
     else {
       leftMain.setNeutralMode(NeutralMode.Coast);
       rightMain.setNeutralMode(NeutralMode.Coast);
+    }
+  }
+
+  /**
+   * Remember to call this before executing the profile
+   * @param profile Motion Profile that will be executed when 
+   * the robot is placed in MP mode.
+   */
+  public void selectProfile(MotionProfileBase profile) {
+    selectedProfile = profile;
+  }
+
+  public void setProfileEnabled(boolean enable) {
+    if (enable != profileEnabled && enable) { // false => true
+      try {
+        System.out.println("Starting Motion Profile");
+        startMotionProfile(selectedProfile);
+      } catch (Exception e) {
+        DriverStation.reportError(
+          "selectedProfile was null, select a profile before attempting to start one!",
+          e.getStackTrace());
+      }
     }
   }
 
