@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import com.ctre.phoenix.motion.SetValueMotionProfile;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.FollowerType;
@@ -16,6 +17,7 @@ import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.util.CANFalconFactory;
 import frc.lib.util.DriveSignal;
+import frc.lib.util.motion_profiles.MotionProfileBase;
 import frc.lib.util.motion_profiles.MotionProfileHelper;
 import frc.robot.Constants;
 
@@ -31,6 +33,11 @@ public class Drive extends SubsystemBase {
    * true = BRAKE, false = COAST
    */
   boolean brakeMode = true;
+
+  /**
+   * If enabled, hold in current position on MP
+   */
+  boolean hold = false;
   /** Creates a new Drive. */
   public Drive() {
     // falcons
@@ -55,6 +62,23 @@ public class Drive extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
 
+    // get MP status, if in MP mode load and execute
+    leftProfileController.control();
+    rightProfileController.control();
+
+    if (profileEnabled) {
+      // get value to pass to falcon (tell it to do MP or not)
+      SetValueMotionProfile setOutputL = leftProfileController.getSetValue();
+      SetValueMotionProfile setOutputR = rightProfileController.getSetValue();
+
+      if (hold) {
+        setOutputL = SetValueMotionProfile.Hold;
+        setOutputR = SetValueMotionProfile.Hold;
+      }
+
+      leftMain.set(ControlMode.MotionProfile, setOutputL.value);
+      rightMain.set(ControlMode.MotionProfile, setOutputR.value);
+    }
   }
 
   public void setOpenLoop(DriveSignal signal)
@@ -76,6 +100,18 @@ public class Drive extends SubsystemBase {
       leftMain.setNeutralMode(NeutralMode.Coast);
       rightMain.setNeutralMode(NeutralMode.Coast);
     }
+  }
+
+  public void startMotionProfile(MotionProfileBase mp) {
+    leftProfileController = new MotionProfileHelper(leftMain, mp.pointsLeft, mp.numPointsLeft, leftMain.getInverted());
+    rightProfileController = new MotionProfileHelper(rightMain, mp.pointsRight, mp.numPointsRight, rightMain.getInverted());
+  }
+
+  public void stopDrive() {
+    profileEnabled = false;
+    setOpenLoop(DriveSignal.NEUTRAL);
+    leftProfileController.reset();
+    rightProfileController.reset();
   }
 
   private double inchesToTicks(double inches) {

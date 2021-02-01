@@ -103,6 +103,17 @@ public class MotionProfileHelper {
 		 */
 		falcon.changeMotionControlFramePeriod(5);
 		_notifer.startPeriodic(0.005);
+    }
+    
+    public MotionProfileHelper(TalonFX talon, boolean invert) {
+        falcon = talon;
+		inverted=invert;
+		/*
+		 * since our MP is 10ms per point, set the control frame rate and the
+		 * notifer to half that
+		 */
+		falcon.changeMotionControlFramePeriod(5);
+		_notifer.startPeriodic(0.005);
 	}
 
 	/**
@@ -150,7 +161,7 @@ public class MotionProfileHelper {
 				 * something is wrong. Talon is not present, unplugged, breaker
 				 * tripped
 				 */
-				System.out.println("MP Timeout | CATASTROPHIC FAILURE");
+				Instrumentation.OnNoProgress();
 			} else {
 				--_loopTimeout;
 			}
@@ -252,7 +263,7 @@ public class MotionProfileHelper {
 		/* did we get an underrun condition since last time we checked ? */
 		if (profileStatus.hasUnderrun) {
 			/* better log it so we know about it */
-			System.out.println("Motion Profile Underrun!");
+			Instrumentation.OnUnderrun();
 			/*
 			 * clear the error. This flag does not auto clear, this way 
 			 * we never miss logging it.
