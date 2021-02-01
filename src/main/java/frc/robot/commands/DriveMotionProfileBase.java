@@ -4,41 +4,25 @@
 
 package frc.robot.commands;
 
-import java.util.function.DoubleSupplier;
-
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.Constants;
-import frc.robot.Robot;
-import frc.robot.RobotContainer;
-import frc.robot.subsystems.Drive;
 
-public class DriveOpenLoop extends CommandBase {
-
-  private final Drive drive;
-  /** Creates a new TankDrive. */
-  public DriveOpenLoop(Drive subsystem) {
-    drive = subsystem;
-    addRequirements(drive);
+public class DriveMotionProfileBase extends CommandBase {
+  /** Creates a new DriveMotionProfileBase. */
+  public DriveMotionProfileBase() {
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
   // Called when the command is initially scheduled.
   @Override
-  public void initialize() {
-
-  }
+  public void initialize() {}
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
-  public void execute() {
-    drive.setOpenLoop(Robot.m_robotContainer.getDriveSignal());
-  }
+  public void execute() {}
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {
-    drive.stopDrive();
-  }
+  public void end(boolean interrupted) {}
 
   // Returns true when the command should end.
   @Override
