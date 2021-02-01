@@ -15,11 +15,8 @@ import frc.robot.subsystems.Drive;
 public class DriveOpenLoop extends CommandBase {
 
   private final Drive drive;
-  private final DoubleSupplier left, right;
   /** Creates a new TankDrive. */
-  public DriveOpenLoop(Drive subsystem, DoubleSupplier leftSupplier, DoubleSupplier rightSupplier) {
-    left = leftSupplier;
-    right = rightSupplier;
+  public DriveOpenLoop(Drive subsystem) {
     drive = subsystem;
     addRequirements(drive);
     // Use addRequirements() here to declare subsystem dependencies.
@@ -40,7 +37,7 @@ public class DriveOpenLoop extends CommandBase {
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    //m_Drive.stopDrive();
+    drive.stopDrive();
   }
 
   // Returns true when the command should end.

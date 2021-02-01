@@ -56,14 +56,11 @@ public class RobotContainer {
 
     autoChooser = new SendableChooser<>();
     autoChooser.setDefaultOption("Trajectory Test", "DriveTest");
-    autoChooser.addOption("Slalom", null);
-    autoChooser.addOption("Barrels", null);
+    autoChooser.addOption("Slalom", "Slalom");
+    autoChooser.addOption("Barrels", "BarrelDodge");
     SmartDashboard.putData(autoChooser);
     m_drive.setDefaultCommand(
-      new DriveOpenLoop(
-        m_drive, 
-        () -> mDriver.getY(GenericHID.Hand.kLeft),
-        () -> mDriver.getY(GenericHID.Hand.kRight))
+      new DriveOpenLoop(m_drive)
     );
 
   }
