@@ -4,33 +4,17 @@
 
 package frc.robot;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.Sendable;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Button;
-import edu.wpi.first.wpilibj.controller.PIDController;
-import edu.wpi.first.wpilibj.controller.RamseteController;
-import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.trajectory.Trajectory;
-import edu.wpi.first.wpilibj.trajectory.TrajectoryUtil;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.lib.util.DriveSignal;
-import frc.robot.commands.DriveMotionProfileBase;
 import frc.robot.commands.DriveOpenLoop;
 import frc.robot.commands.DriveTestProfileCommand;
-import frc.robot.motion_profile.DriveTestMotionProfile;
 import frc.robot.subsystems.Drive;
-import frc.lib.util.Util;
-import frc.lib.util.motion_profiles.MotionProfileBase;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -84,7 +68,7 @@ public class RobotContainer {
     driverLB = new JoystickButton(driverHID, Button.kBumperLeft.value);
 
     // Assign Triggers
-    driverA.whenPressed(new DriveTestProfileCommand(), true);
+    driverA.toggleWhenPressed(new DriveTestProfileCommand());
   }
 
   /**
