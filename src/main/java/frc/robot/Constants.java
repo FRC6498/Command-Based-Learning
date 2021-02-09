@@ -45,4 +45,13 @@ public final class Constants {
 	public static double kDriveTicksPerInch = 0;
 	public static double regularTurnReduction = 0;
 	public static double kDriveSwivelReduction = 0;
+	public static double ramseteB;
+	public static double ramseteZeta;
+	public static double robotTrackWidth;
+	public static double gearRatio;
+	public static double ksVolts;
+	public static double kvVoltSecondsPerMeter;
+	public static double kaVoltSecondsSquaredPerMeter;
+	public static DifferentialDriveKinematics driveKinematics;
+	public static double kPDriveVel;
 }

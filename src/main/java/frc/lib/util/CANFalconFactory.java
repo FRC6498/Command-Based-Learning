@@ -8,7 +8,7 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
 import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 /**
  * Creates CTRE Controller objects and configures all the parameters we care about.
@@ -17,9 +17,9 @@ import com.ctre.phoenix.motorcontrol.can.TalonFX;
  */
 public class CANFalconFactory {
 
-    public static TalonFX createFalcon(int deviceID, boolean inverted, NeutralMode neutralMode,
+    public static WPI_TalonFX createFalcon(int deviceID, boolean inverted, NeutralMode neutralMode,
     FeedbackDevice device, int controlID, boolean reverseSensor) {
-        TalonFX falcon = new TalonFX(deviceID);
+        WPI_TalonFX falcon = new WPI_TalonFX(deviceID);
 
         falcon.clearStickyFaults();
         falcon.setInverted(inverted);
@@ -29,7 +29,7 @@ public class CANFalconFactory {
         return falcon;
     }
 
-    public static TalonFX tunePID(TalonFX falcon, int id, double P, double I, double D, double F) {
+    public static WPI_TalonFX tunePID(WPI_TalonFX falcon, int id, double P, double I, double D, double F) {
         falcon.config_kP(id, P);
         falcon.config_kI(id, I);
         falcon.config_kD(id, D);
@@ -37,7 +37,7 @@ public class CANFalconFactory {
         return falcon;
     }
 
-    public static TalonFX setupHardLimits(TalonFX falcon, LimitSwitchSource forwardSource, 
+    public static WPI_TalonFX setupHardLimits(WPI_TalonFX falcon, LimitSwitchSource forwardSource, 
     LimitSwitchNormal forwardNormal, boolean clearPosOnForward, LimitSwitchSource reverseSource, 
     LimitSwitchNormal reverseNormal, boolean clearPosOnReverse){
 
@@ -50,7 +50,7 @@ public class CANFalconFactory {
        return falcon; 
     }
 
-    public static TalonFX setupSoftLimits(TalonFX falcon, boolean forwardEnable, int forwardThreshold,
+    public static WPI_TalonFX setupSoftLimits(WPI_TalonFX falcon, boolean forwardEnable, int forwardThreshold,
     boolean reverseEnable, int reverseThreshold){
 
         falcon.configForwardSoftLimitThreshold(forwardThreshold);

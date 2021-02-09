@@ -9,37 +9,46 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.FollowerType;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.SpeedControllerGroup;
+import edu.wpi.first.wpilibj.SerialPort.Port;
+import edu.wpi.first.wpilibj.controller.RamseteController;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.geometry.Pose2d;
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.util.CANFalconFactory;
 import frc.lib.util.DriveSignal;
-import frc.lib.util.motion_profiles.MotionProfileBase;
-import frc.lib.util.motion_profiles.MotionProfileHelper;
 import frc.robot.Constants;
 
 public class Drive extends SubsystemBase {
   // Subsystem Instance
   private static Drive instance = new Drive();
   // Hardware
-  private TalonFX leftMain, leftFollow, rightMain, rightFollow;
+  private WPI_TalonFX leftMain, leftFollow, rightMain, rightFollow;
   // Controllers
-  MotionProfileHelper leftProfileController, rightProfileController;
-  boolean profileEnabled = false;
-  MotionProfileBase selectedProfile;
-  /**
-   * true = BRAKE, false = COAST
-   */
-  boolean brakeMode = true;
+  private SpeedControllerGroup leftMotors = new SpeedControllerGroup(leftMain, leftFollow), 
+  rightMotors = new SpeedControllerGroup(rightMain, rightFollow);
 
-  /**
-   * If enabled, hold in current position on MP
-   */
-  boolean hold = false;
+  public DifferentialDrive drive = new DifferentialDrive(leftMotors, rightMotors);
+  public RamseteController ramseteController = new RamseteController(
+    Constants.ramseteB, 
+    Constants.ramseteZeta
+    );
+  public Rotation2d rotation = new Rotation2d();
+  public Pose2d robotPose = new Pose2d();
+  public DifferentialDriveOdometry odometry;
+  // TRACK WIDTH MEASUERED DISTANCE WHEEL CENTER TO WHEEL CENTER IN METERS
+  public DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(Constants.robotTrackWidth);
+  public static AHRS gyro = new AHRS(Port.kMXP);
+
   /** Creates a new Drive. */
   public Drive() {
     // falcons
@@ -54,6 +63,18 @@ public class Drive extends SubsystemBase {
 
     leftFollow.follow(leftMain);
     rightFollow.follow(rightMain);
+
+    leftMain.setSafetyEnabled(false);
+    leftFollow.setSafetyEnabled(false);
+    rightMain.setSafetyEnabled(false);
+    rightFollow.setSafetyEnabled(false);
+
+    leftMain.setInverted(false);
+    leftFollow.setInverted(false);
+    rightMain.setInverted(true);
+    rightFollow.setInverted(true);
+
+    odometry = new DifferentialDriveOdometry(gyro.getRotation2d());
   }
 
   public static Drive getInstance() {
@@ -64,33 +85,14 @@ public class Drive extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
 
-    // get MP status, if in MP mode load and execute
-    leftProfileController.control();
-    rightProfileController.control();
-
-    if (profileEnabled) {
-      // get value to pass to falcon (tell it to do MP or not)
-      SetValueMotionProfile setOutputL = leftProfileController.getSetValue();
-      SetValueMotionProfile setOutputR = rightProfileController.getSetValue();
-
-      if (hold) {
-        setOutputL = SetValueMotionProfile.Hold;
-        setOutputR = SetValueMotionProfile.Hold;
-      }
-
-      leftMain.set(ControlMode.MotionProfile, setOutputL.value);
-      rightMain.set(ControlMode.MotionProfile, setOutputR.value);
-    }
+    Rotation2d gyroAngleRotation2d = Rotation2d.fromDegrees(getHeading());
+    odometry.update(gyroAngleRotation2d, getDistanceMeters(true), getDistanceMeters(false));  
   }
 
   public void setOpenLoop(DriveSignal signal)
   {
-    if (!profileEnabled) {
-      setBrakeMode(signal.getBrakeMode());
-      // left side is reversed, but reverseOutput doesnt invert percentvbus
-      leftMain.set(ControlMode.PercentOutput, signal.getLeft());
-      rightMain.set(ControlMode.PercentOutput, signal.getRight());
-    }
+    // left side is reversed, but reverseOutput doesnt invert percentvbus
+    drive.tankDrive(signal.getLeft(), signal.getRight());
   }
 
   public void setBrakeMode(boolean brakeMode) {
@@ -105,45 +107,84 @@ public class Drive extends SubsystemBase {
   }
 
   /**
-   * Remember to call this before executing the profile
-   * @param profile Motion Profile that will be executed when 
-   * the robot is placed in MP mode.
+   * Resets odometry to specified pose
+   * 
+   * @param pose
    */
-  public void selectProfile(MotionProfileBase profile) {
-    selectedProfile = profile;
+  public void resetOdometry(Pose2d pose) {
+    resetEncoders();
+    odometry.resetPosition(pose, Rotation2d.fromDegrees(getHeading()));
   }
 
-  public void setProfileEnabled(boolean enable) {
-    if (enable != profileEnabled && enable) { // false => true
-      try {
-        System.out.println("Starting Motion Profile");
-        startMotionProfile(selectedProfile);
-      } catch (Exception e) {
-        DriverStation.reportError(
-          "selectedProfile was null, select a profile before attempting to start one!",
-          e.getStackTrace());
-      }
+  public Pose2d getRobotPoseMeters() {
+    return odometry.getPoseMeters();
+  }
+
+  public double getGyroAngle() {
+    return -gyro.getAngle();
+  }
+
+  public void resetGyro() {
+    gyro.reset();
+  }
+
+  public double getHeading() {
+    return getGyroAngle() % 360;
+  }
+
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(
+      getEncoderVelocity(leftMain), 
+      getEncoderVelocity(rightMain)
+    );
+  }
+
+
+  public void tankDriveVolts(double leftVolts, double rightVolts) {
+    leftMotors.setVoltage(leftVolts);
+    rightMotors.setVoltage(rightVolts);
+    drive.feed();
+  }
+
+  public void resetEncoders() {
+    leftMain.setSelectedSensorPosition(0);
+    leftFollow.setSelectedSensorPosition(0);
+    rightMain.setSelectedSensorPosition(0);
+    rightFollow.setSelectedSensorPosition(0);
+  }
+
+  public double getEncoderPosition(WPI_TalonFX falcon) {
+    return falcon.getSelectedSensorPosition();
+  }
+  public double getEncoderVelocity(WPI_TalonFX falcon) {
+    return falcon.getSelectedSensorVelocity();
+  }
+
+  /**
+   * Polls encoder for position in ticks and converts to inches.
+   * 
+   * @return Inches turned by specified motor.
+   */
+  private double getDistance(WPI_TalonFX falcon) {
+    double inches = ((getEncoderPosition(falcon) / Constants.gearRatio) / 2048) * (6 * Math.PI);
+    return inches;
+  }
+
+  /**
+   * 
+   * @param left Are we getting this distance travelled by the left side?
+   * @return Distance in meters travelled by the specified side
+   */
+  private double getDistanceMeters(boolean left) {
+    if (left) {
+      return getDistance(leftMain) * 0.0254; // 1 inch = 0.0254m
+    } else {
+      return getDistance(rightMain) * 0.0254; // 1 inch = 0.0254m
     }
-  }
-
-  public void startMotionProfile(MotionProfileBase mp) {
-    leftProfileController = new MotionProfileHelper(leftMain, mp.pointsLeft, mp.numPointsLeft, leftMain.getInverted());
-    rightProfileController = new MotionProfileHelper(rightMain, mp.pointsRight, mp.numPointsRight, rightMain.getInverted());
-  }
-
-  public void stopDrive() {
-    profileEnabled = false;
-    setOpenLoop(DriveSignal.NEUTRAL);
-    leftProfileController.reset();
-    rightProfileController.reset();
-  }
-
-  private double inchesToTicks(double inches) {
-    return inches*Constants.kDriveTicksPerInch;
   }
  
   // TODO: PATHWEAVER PARAMS
   // max vel = 1.0m/s
-  // max vel = 1.0 m/s^2
+  // max acc = 1.0 m/s^2
   // wheel base = 0.572m
 }

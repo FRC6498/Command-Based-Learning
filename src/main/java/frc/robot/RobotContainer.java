@@ -4,16 +4,28 @@
 
 package frc.robot;
 
+import java.io.IOException;
+
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Button;
+import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.wpilibj.controller.RamseteController;
+import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryUtil;
+import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.lib.util.DriveSignal;
 import frc.robot.commands.DriveOpenLoop;
-import frc.robot.commands.DriveTestProfileCommand;
+import frc.robot.commands.DriveTestRoute;
 import frc.robot.subsystems.Drive;
 
 /**
@@ -24,12 +36,13 @@ import frc.robot.subsystems.Drive;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
-  private final Drive m_drive = new Drive();
-  private SendableChooser<Command> autoChooser;
+  private final Drive drive = Drive.getInstance();
+  private SendableChooser<String> autoChooser;
   double throttle=0;
   double turn=0;
   boolean driveInverted;
-
+  String trajectoryJSON = "";
+  Trajectory trajectory = new Trajectory();
   // Controllers
   XboxController driverHID;
   
@@ -45,10 +58,10 @@ public class RobotContainer {
     configureButtonBindings();
 
     autoChooser = new SendableChooser<>();
-    autoChooser.setDefaultOption("Consistency Test", new DriveTestProfileCommand());
+    autoChooser.setDefaultOption("Consistency Test","paths/DriveTest.wpilib.json");
     SmartDashboard.putData(autoChooser);
-    m_drive.setDefaultCommand(
-      new DriveOpenLoop(m_drive)
+    drive.setDefaultCommand(
+      new DriveOpenLoop(drive)
     );
 
   }
@@ -68,16 +81,62 @@ public class RobotContainer {
     driverLB = new JoystickButton(driverHID, Button.kBumperLeft.value);
 
     // Assign Triggers
-    driverA.toggleWhenPressed(new DriveTestProfileCommand());
+    //driverA.toggleWhenPressed();
   }
 
+  public Command ramseteCommand() {
+    DifferentialDriveVoltageConstraint vc = new DifferentialDriveVoltageConstraint(
+      new SimpleMotorFeedforward(
+        Constants.ksVolts,
+        Constants.kvVoltSecondsPerMeter,
+        Constants.kaVoltSecondsSquaredPerMeter), 
+      Constants.driveKinematics,
+      10);
+
+    /*
+    TrajectoryConfig config = 
+      new TrajectoryConfig(1.0, 1.0)
+        .setKinematics(Constants.driveKinematics)
+        .addConstraint(vc); // max vel, max acc
+    */
+    try {
+      trajectory = TrajectoryUtil.fromPathweaverJson(
+        Filesystem.getDeployDirectory().toPath().resolve(trajectoryJSON)
+      );
+    } catch (IOException ioe) {
+      DriverStation.reportError("Trajectory Load Failed", ioe.getStackTrace());
+    }
+
+    RamseteCommand ramseteCommand = new RamseteCommand(
+      trajectory, 
+      drive::getRobotPoseMeters, 
+      new RamseteController(
+        Constants.ramseteB, 
+        Constants.ramseteZeta
+      ), new SimpleMotorFeedforward(
+        Constants.ksVolts,
+        Constants.kvVoltSecondsPerMeter,
+        Constants.kaVoltSecondsSquaredPerMeter
+      ), 
+      Constants.driveKinematics, 
+      drive::getWheelSpeeds, 
+      new PIDController(Constants.kPDriveVel, 0, 0),
+      new PIDController(Constants.kPDriveVel, 0, 0), 
+      drive::tankDriveVolts, 
+      drive
+    );
+
+    drive.resetOdometry(trajectory.getInitialPose());
+    return ramseteCommand.andThen(() -> drive.setOpenLoop(new DriveSignal(0,0)));
+  }
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return autoChooser.getSelected();
+    return ramseteCommand();
+    //return autoChooser.getSelected();
   }
 
   public void driverArcadeDrive() {
