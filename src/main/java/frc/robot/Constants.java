@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveKinematicsConstraint;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -37,21 +38,32 @@ public final class Constants {
 
     // Max Velocity/Acceleration
     public static final double kMaxSpeedMetersPerSecond = 3;
-    public static final double kMaxAccelerationMetersPerSecondSquared = 3;
+    public static final double kMaxAccelerationMetersPerSecondSquared = 1;
 
     // Input Scaling
 	public static final double leftStickInputScale = 0.5;
 	public static final double rightStickInputScale = 0.5;
-	public static double kDriveTicksPerInch = 0;
+    public static int kDriveTicksPerMeter = 365955;
+    // 1 rev = 2048 ticks
+    // wheel dia = 5.85in
+    // 26.67 motor rev = 1 wheel rev
+    // 26.67*2048 = ticks per wheel rev
+    // 1 wheel rev = 0.148m
+    // 6.7 wheel rev = 1m
+    // 
+    /** */
+    double distancePerPulse = (0.149 * Math.PI) / (double) 2048;
 	public static double regularTurnReduction = 0;
 	public static double kDriveSwivelReduction = 0;
-	public static double ramseteB;
-	public static double ramseteZeta;
-	public static double robotTrackWidth;
-	public static double gearRatio;
-	public static double ksVolts;
-	public static double kvVoltSecondsPerMeter;
-	public static double kaVoltSecondsSquaredPerMeter;
-	public static DifferentialDriveKinematics driveKinematics;
-	public static double kPDriveVel;
+	public static double ramseteB = 2;
+	public static double ramseteZeta = 0.7;
+	public static double robotTrackWidth = 0.572; // meters
+	public static double gearRatio; // GEARING = 10
+	public static double ksVolts = 0.654;
+	public static double kvVoltSecondsPerMeter = 2.36;
+    public static double kaVoltSecondsSquaredPerMeter = 0.284;
+    public static double kPDriveVel = 2.37;
+	public static DifferentialDriveKinematics driveKinematics = new DifferentialDriveKinematics(robotTrackWidth);
+    public static double maxVelocityMetersPerSecond = 3.0;
+    public static double maxAccelMetersPerSecondSquared = 3.0;
 }

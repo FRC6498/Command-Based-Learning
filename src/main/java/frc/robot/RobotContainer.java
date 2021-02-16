@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryUtil;
 import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -92,12 +93,12 @@ public class RobotContainer {
       Constants.driveKinematics,
       10);
 
-    /*
+    
     TrajectoryConfig config = 
-      new TrajectoryConfig(1.0, 1.0)
+      new TrajectoryConfig(3.0, 3.0)
         .setKinematics(Constants.driveKinematics)
         .addConstraint(vc); // max vel, max acc
-    */
+
     try {
       trajectory = TrajectoryUtil.fromPathweaverJson(
         Filesystem.getDeployDirectory().toPath().resolve(trajectoryJSON)

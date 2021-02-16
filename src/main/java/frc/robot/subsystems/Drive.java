@@ -47,7 +47,7 @@ public class Drive extends SubsystemBase {
   public DifferentialDriveOdometry odometry;
   // TRACK WIDTH MEASUERED DISTANCE WHEEL CENTER TO WHEEL CENTER IN METERS
   public DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(Constants.robotTrackWidth);
-  public static AHRS gyro = new AHRS(Port.kMXP);
+  public static AHRS gyro;
 
   /** Creates a new Drive. */
   public Drive() {
@@ -74,7 +74,9 @@ public class Drive extends SubsystemBase {
     rightMain.setInverted(true);
     rightFollow.setInverted(true);
 
+    gyro = new AHRS(Port.kMXP);
     odometry = new DifferentialDriveOdometry(gyro.getRotation2d());
+    
   }
 
   public static Drive getInstance() {
