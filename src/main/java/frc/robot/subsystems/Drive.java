@@ -4,18 +4,13 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motion.SetValueMotionProfile;
-import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.FollowerType;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-
 import com.kauailabs.navx.frc.AHRS;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.SerialPort.Port;
+import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.controller.RamseteController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -27,6 +22,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.util.CANFalconFactory;
 import frc.lib.util.DriveSignal;
 import frc.robot.Constants;
+import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.TrajectoryConstants;
 
 public class Drive extends SubsystemBase {
   // Subsystem Instance
@@ -39,26 +36,26 @@ public class Drive extends SubsystemBase {
 
   public DifferentialDrive drive = new DifferentialDrive(leftMotors, rightMotors);
   public RamseteController ramseteController = new RamseteController(
-    Constants.ramseteB, 
-    Constants.ramseteZeta
+    TrajectoryConstants.ramseteB, 
+    TrajectoryConstants.ramseteZeta
     );
   public Rotation2d rotation = new Rotation2d();
   public Pose2d robotPose = new Pose2d();
   public DifferentialDriveOdometry odometry;
   // TRACK WIDTH MEASUERED DISTANCE WHEEL CENTER TO WHEEL CENTER IN METERS
-  public DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(Constants.robotTrackWidth);
+  public DifferentialDriveKinematics kinematics = Constants.driveKinematics;
   public static AHRS gyro;
 
   /** Creates a new Drive. */
   public Drive() {
     // falcons
-    leftMain = CANFalconFactory.createFalcon(Constants.kLeftMainFalconID,
+    leftMain = CANFalconFactory.createFalcon(DriveConstants.kLeftMainFalconID,
      true, NeutralMode.Brake, FeedbackDevice.IntegratedSensor, 0, false);
-    leftFollow = CANFalconFactory.createFalcon(Constants.kLeftFollowFalconID, 
+    leftFollow = CANFalconFactory.createFalcon(DriveConstants.kLeftFollowFalconID, 
     true, NeutralMode.Brake, FeedbackDevice.IntegratedSensor, 0, false);
-    rightMain = CANFalconFactory.createFalcon(Constants.kRightMainFalconID, 
+    rightMain = CANFalconFactory.createFalcon(DriveConstants.kRightMainFalconID, 
     false, NeutralMode.Brake, FeedbackDevice.IntegratedSensor, 0, false);
-    rightFollow = CANFalconFactory.createFalcon(Constants.kRightFollowFalconID, 
+    rightFollow = CANFalconFactory.createFalcon(DriveConstants.kRightFollowFalconID, 
     false, NeutralMode.Brake, FeedbackDevice.IntegratedSensor, 0, false);
 
     leftFollow.follow(leftMain);
@@ -168,7 +165,7 @@ public class Drive extends SubsystemBase {
    * @return Inches turned by specified motor.
    */
   private double getDistance(WPI_TalonFX falcon) {
-    double inches = ((getEncoderPosition(falcon) / Constants.gearRatio) / 2048) * (6 * Math.PI);
+    double inches = ((getEncoderPosition(falcon) / TrajectoryConstants.gearRatio) / 2048) * (6 * Math.PI);
     return inches;
   }
 
@@ -185,7 +182,7 @@ public class Drive extends SubsystemBase {
     }
   }
  
-  // TODO: PATHWEAVER PARAMS
+  // PATHWEAVER PARAMS
   // max vel = 1.0m/s
   // max acc = 1.0 m/s^2
   // wheel base = 0.572m

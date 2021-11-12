@@ -18,13 +18,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
-import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryUtil;
 import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.lib.util.DriveSignal;
+import frc.robot.Constants.TrajectoryConstants;
 import frc.robot.commands.DriveOpenLoop;
 import frc.robot.subsystems.Drive;
 
@@ -87,9 +87,9 @@ public class RobotContainer {
   public Command ramseteCommand() {
     DifferentialDriveVoltageConstraint vc = new DifferentialDriveVoltageConstraint(
       new SimpleMotorFeedforward(
-        Constants.ksVolts,
-        Constants.kvVoltSecondsPerMeter,
-        Constants.kaVoltSecondsSquaredPerMeter), 
+        TrajectoryConstants.ksVolts,
+        TrajectoryConstants.kvVoltSecondsPerMeter,
+        TrajectoryConstants.kaVoltSecondsSquaredPerMeter), 
       Constants.driveKinematics,
       10);
 
@@ -111,17 +111,17 @@ public class RobotContainer {
       trajectory, 
       drive::getRobotPoseMeters, 
       new RamseteController(
-        Constants.ramseteB, 
-        Constants.ramseteZeta
+        TrajectoryConstants.ramseteB, 
+        TrajectoryConstants.ramseteZeta
       ), new SimpleMotorFeedforward(
-        Constants.ksVolts,
-        Constants.kvVoltSecondsPerMeter,
-        Constants.kaVoltSecondsSquaredPerMeter
+        TrajectoryConstants.ksVolts,
+        TrajectoryConstants.kvVoltSecondsPerMeter,
+        TrajectoryConstants.kaVoltSecondsSquaredPerMeter
       ), 
       Constants.driveKinematics, 
       drive::getWheelSpeeds, 
-      new PIDController(Constants.kPDriveVel, 0, 0),
-      new PIDController(Constants.kPDriveVel, 0, 0), 
+      new PIDController(TrajectoryConstants.kPDriveVel, 0, 0),
+      new PIDController(TrajectoryConstants.kPDriveVel, 0, 0), 
       drive::tankDriveVolts, 
       drive
     );

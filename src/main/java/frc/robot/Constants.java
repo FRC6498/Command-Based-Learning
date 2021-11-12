@@ -5,7 +5,6 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveKinematicsConstraint;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -17,7 +16,7 @@ import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveKinematicsCo
  */
 public final class Constants {
 	
-	class Drive {
+	public static final class DriveConstants {
 		// Motor IDs
 		public static final int kLeftMainFalconID = 1;
 		public static final int kLeftFollowFalconID = 2;
@@ -30,8 +29,8 @@ public final class Constants {
 		public static final double driveGearing = 20.8;	
 	}
 	
-	class Trajectory {
-		// TODO: TUNE TRAJECTORY PID
+	public static final class TrajectoryConstants {
+		// TUNE TRAJECTORY PID
 		// Feedforward/Feedback Gains
 
 		// Max Velocity/Acceleration
@@ -41,7 +40,7 @@ public final class Constants {
 		// Input Scaling
 		public static final double leftStickInputScale = 0.5;
 		public static final double rightStickInputScale = 0.5;
-		public static int kDriveTicksPerMeter = 365955;
+		public static final int kDriveTicksPerMeter = 365955;
 		// 1 rev = 2048 ticks
 		// wheel dia = 5.85in
 		// 26.67 motor rev = 1 wheel rev
@@ -49,20 +48,21 @@ public final class Constants {
 		// 1 wheel rev = 0.148m
 		// 6.7 wheel rev = 1m
 		
-		public static double ramseteB = 2;
-		public static double ramseteZeta = 0.7;
-		public static double robotTrackWidth = 0.572; // meters
+		public static final double ramseteB = 2;
+		public static final double ramseteZeta = 0.7;
+		public static final double robotTrackWidth = 0.572; // meters
 		
-		public static double gearRatio; // GEARING = 10
-		public static double ksVolts = 0.654;
-		public static double kvVoltSecondsPerMeter = 2.36;
-		public static double kaVoltSecondsSquaredPerMeter = 0.284;
-		public static double kPDriveVel = 2.37;
-		public static DifferentialDriveKinematics driveKinematics = new DifferentialDriveKinematics(robotTrackWidth);
-		public static double maxVelocityMetersPerSecond = 3.0;
-		public static double maxAccelMetersPerSecondSquared = 3.0;
+		public static final double gearRatio = 10; // GEARING = 10
+		public static final double ksVolts = 0.654;
+		public static final double kvVoltSecondsPerMeter = 2.36;
+		public static final double kaVoltSecondsSquaredPerMeter = 0.284;
+		public static final double kPDriveVel = 2.37;
+		
+		public static final double maxVelocityMetersPerSecond = 3.0;
+		public static final double maxAccelMetersPerSecondSquared = 3.0;
 		double distancePerPulse = (0.149 * Math.PI) / (double) 2048;
 	}
+	public static DifferentialDriveKinematics driveKinematics = new DifferentialDriveKinematics(TrajectoryConstants.robotTrackWidth);
 	public static double regularTurnReduction = 0;
 	public static double kDriveSwivelReduction = 0;
 }
